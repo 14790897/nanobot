@@ -556,10 +556,13 @@ def serve(
         console.print(f"[red]Error: {exc}[/red]")
         raise typer.Exit(1) from exc
 
-    model_name = runtime_config.agents.defaults.model
+    _resolved = runtime_config.resolve_preset()
+    model_name = _resolved.model
+    preset_name = runtime_config.agents.defaults.model_preset
+    preset_tag = f" (preset: {preset_name})" if preset_name else ""
     console.print(f"{__logo__} Starting OpenAI-compatible API server")
     console.print(f"  [cyan]Endpoint[/cyan] : http://{host}:{port}/v1/chat/completions")
-    console.print(f"  [cyan]Model[/cyan]    : {model_name}")
+    console.print(f"  [cyan]Model[/cyan]    : {model_name}{preset_tag}")
     console.print("  [cyan]Session[/cyan]  : api:default")
     console.print(f"  [cyan]Timeout[/cyan]  : {timeout}s")
     if host in {"0.0.0.0", "::"}:
@@ -1082,7 +1085,10 @@ def agent(
         # Interactive mode — route through bus like other channels
         from nanobot.bus.events import InboundMessage
         _init_prompt_session()
-        console.print(f"{__logo__} Interactive mode [bold blue]({config.agents.defaults.model})[/bold blue] — type [bold]exit[/bold] or [bold]Ctrl+C[/bold] to quit\n")
+        _resolved = config.resolve_preset()
+        _preset = config.agents.defaults.model_preset
+        _preset_tag = f" (preset: {_preset})" if _preset else ""
+        console.print(f"{__logo__} Interactive mode [bold blue]({_resolved.model})[/bold blue]{_preset_tag} — type [bold]exit[/bold] or [bold]Ctrl+C[/bold] to quit\n")
 
         if ":" in session_id:
             cli_channel, cli_chat_id = session_id.split(":", 1)
@@ -1440,7 +1446,10 @@ def status():
     if config_path.exists():
         from nanobot.providers.registry import PROVIDERS
 
-        console.print(f"Model: {config.agents.defaults.model}")
+        _resolved = config.resolve_preset()
+        _preset = config.agents.defaults.model_preset
+        _preset_tag = f" (preset: {_preset})" if _preset else ""
+        console.print(f"Model: {_resolved.model}{_preset_tag}")
 
         # Check API keys from registry
         for spec in PROVIDERS:
