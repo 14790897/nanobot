@@ -365,3 +365,49 @@ def test_config_defaults():
     assert config.tools.my.allow_set is False
     assert config.tools.image_generation.enabled is False
     assert config.tools.restrict_to_workspace is False
+
+
+# --- Task 10: Integration test ---
+
+
+def test_loader_registers_same_tools_as_old_hardcoded():
+    """Verify the loader produces the same tool set as the old _register_default_tools."""
+    from nanobot.agent.tools.loader import ToolLoader
+    from nanobot.agent.tools.registry import ToolRegistry
+
+    mock_config = MagicMock()
+    mock_config.exec.enable = True
+    mock_config.exec.timeout = 60
+    mock_config.exec.sandbox = ""
+    mock_config.exec.path_append = ""
+    mock_config.exec.allowed_env_keys = []
+    mock_config.exec.allow_patterns = []
+    mock_config.exec.deny_patterns = []
+    mock_config.restrict_to_workspace = False
+    mock_config.web.enable = True
+    mock_config.web.search = MagicMock()
+    mock_config.web.fetch = MagicMock()
+    mock_config.web.proxy = None
+    mock_config.web.user_agent = None
+    mock_config.image_generation.enabled = False
+    mock_config.my.enable = True
+
+    ctx = ToolContext(
+        config=mock_config,
+        workspace="/tmp",
+        bus=MagicMock(),
+        subagent_manager=MagicMock(),
+        cron_service=MagicMock(),
+        timezone="UTC",
+    )
+    registry = ToolRegistry()
+    loader = ToolLoader()
+    registered = loader.load(ctx, registry)
+
+    expected = {
+        "ask_user", "read_file", "write_file", "edit_file", "list_dir",
+        "glob", "grep", "notebook_edit", "exec", "web_search", "web_fetch",
+        "message", "spawn", "cron",
+    }
+    actual = set(registered)
+    assert expected <= actual, f"Missing tools: {expected - actual}"
