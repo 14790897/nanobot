@@ -28,6 +28,7 @@ class ToolLoader:
         self._package = package
 
     def discover(self) -> list[type[Tool]]:
+        seen: set[int] = set()
         results: list[type[Tool]] = []
         for _importer, module_name, _ispkg in pkgutil.iter_modules(self._package.__path__):
             if module_name.startswith("_") or module_name in _SKIP_MODULES:
@@ -46,7 +47,9 @@ class ToolLoader:
                     and not attr_name.startswith("_")
                     and not getattr(attr, "__abstractmethods__", None)
                     and getattr(attr, "_plugin_discoverable", True)
+                    and id(attr) not in seen
                 ):
+                    seen.add(id(attr))
                     results.append(attr)
         results.sort(key=lambda cls: cls.__name__)
         return results

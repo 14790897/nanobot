@@ -75,8 +75,8 @@ class _FsTool(Tool):
         from nanobot.agent.skills import BUILTIN_SKILLS_DIR
 
         restrict = (
-            ctx.config.tools.restrict_to_workspace
-            or ctx.config.tools.exec.sandbox
+            ctx.config.restrict_to_workspace
+            or ctx.config.exec.sandbox
         )
         allowed_dir = Path(ctx.workspace) if restrict else None
         extra_read = [BUILTIN_SKILLS_DIR] if allowed_dir else None

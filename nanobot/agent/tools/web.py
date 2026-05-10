@@ -121,7 +121,7 @@ class WebSearchTool(Tool):
 
     @classmethod
     def enabled(cls, ctx: Any) -> bool:
-        return ctx.config.tools.web.enable
+        return ctx.config.web.enable
 
     @classmethod
     def create(cls, ctx: Any) -> Tool:
@@ -131,9 +131,9 @@ class WebSearchTool(Tool):
                 from nanobot.config.loader import load_config, resolve_config_env_vars
                 return resolve_config_env_vars(load_config()).tools.web.search
         return cls(
-            config=ctx.config.tools.web.search,
-            proxy=ctx.config.tools.web.proxy,
-            user_agent=ctx.config.tools.web.user_agent,
+            config=ctx.config.web.search,
+            proxy=ctx.config.web.proxy,
+            user_agent=ctx.config.web.user_agent,
             config_loader=config_loader,
         )
 
@@ -437,14 +437,14 @@ class WebFetchTool(Tool):
 
     @classmethod
     def enabled(cls, ctx: Any) -> bool:
-        return ctx.config.tools.web.enable
+        return ctx.config.web.enable
 
     @classmethod
     def create(cls, ctx: Any) -> Tool:
         return cls(
-            config=ctx.config.tools.web.fetch,
-            proxy=ctx.config.tools.web.proxy,
-            user_agent=ctx.config.tools.web.user_agent,
+            config=ctx.config.web.fetch,
+            proxy=ctx.config.web.proxy,
+            user_agent=ctx.config.web.user_agent,
         )
 
     def __init__(self, config: WebFetchConfig | None = None, proxy: str | None = None, user_agent: str | None = None, max_chars: int = 50000):

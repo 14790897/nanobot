@@ -78,13 +78,13 @@ class ImageGenerationTool(Tool):
 
     @classmethod
     def enabled(cls, ctx: Any) -> bool:
-        return ctx.config.tools.image_generation.enabled
+        return ctx.config.image_generation.enabled
 
     @classmethod
     def create(cls, ctx: Any) -> Tool:
         return cls(
             workspace=ctx.workspace,
-            config=ctx.config.tools.image_generation,
+            config=ctx.config.image_generation,
             provider_configs=ctx.image_generation_provider_configs,
         )
 

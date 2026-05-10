@@ -72,15 +72,15 @@ class ExecTool(Tool):
 
     @classmethod
     def enabled(cls, ctx: Any) -> bool:
-        return ctx.config.tools.exec.enable
+        return ctx.config.exec.enable
 
     @classmethod
     def create(cls, ctx: Any) -> Tool:
-        cfg = ctx.config.tools.exec
+        cfg = ctx.config.exec
         return cls(
             working_dir=ctx.workspace,
             timeout=cfg.timeout,
-            restrict_to_workspace=ctx.config.tools.restrict_to_workspace,
+            restrict_to_workspace=ctx.config.restrict_to_workspace,
             sandbox=cfg.sandbox,
             path_append=cfg.path_append,
             allowed_env_keys=cfg.allowed_env_keys,

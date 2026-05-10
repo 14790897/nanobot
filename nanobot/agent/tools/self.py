@@ -39,6 +39,7 @@ def _has_real_attr(obj: Any, key: str) -> bool:
 class MyTool(Tool):
     """Check and set the agent loop's runtime configuration."""
 
+    _plugin_discoverable = False  # Requires AgentLoop reference; registered manually
     config_key = "my"
 
     @classmethod
@@ -47,7 +48,7 @@ class MyTool(Tool):
 
     @classmethod
     def enabled(cls, ctx: Any) -> bool:
-        return ctx.config.tools.my.enable
+        return ctx.config.my.enable
 
     BLOCKED = frozenset({
         # Core infrastructure

@@ -120,8 +120,8 @@ from pathlib import Path
 def test_fs_tool_create_builds_from_context():
     from nanobot.agent.tools.filesystem import ReadFileTool
     mock_config = MagicMock()
-    mock_config.tools.restrict_to_workspace = False
-    mock_config.tools.exec.sandbox = ""
+    mock_config.restrict_to_workspace = False
+    mock_config.exec.sandbox = ""
     ctx = ToolContext(config=mock_config, workspace="/tmp/test")
     tool = ReadFileTool.create(ctx)
     assert isinstance(tool, ReadFileTool)
@@ -131,8 +131,8 @@ def test_fs_tool_create_builds_from_context():
 def test_fs_tool_create_respects_restrict_to_workspace():
     from nanobot.agent.tools.filesystem import ReadFileTool
     mock_config = MagicMock()
-    mock_config.tools.restrict_to_workspace = True
-    mock_config.tools.exec.sandbox = ""
+    mock_config.restrict_to_workspace = True
+    mock_config.exec.sandbox = ""
     ctx = ToolContext(config=mock_config, workspace="/tmp/test")
     tool = ReadFileTool.create(ctx)
     assert tool._allowed_dir == Path("/tmp/test")
@@ -141,8 +141,8 @@ def test_fs_tool_create_respects_restrict_to_workspace():
 def test_fs_tool_create_respects_sandbox():
     from nanobot.agent.tools.filesystem import ReadFileTool
     mock_config = MagicMock()
-    mock_config.tools.restrict_to_workspace = False
-    mock_config.tools.exec.sandbox = "bwrap"
+    mock_config.restrict_to_workspace = False
+    mock_config.exec.sandbox = "bwrap"
     ctx = ToolContext(config=mock_config, workspace="/tmp/test")
     tool = ReadFileTool.create(ctx)
     assert tool._allowed_dir == Path("/tmp/test")
@@ -208,24 +208,24 @@ def test_exec_tool_config_cls():
 def test_exec_tool_enabled():
     from nanobot.agent.tools.shell import ExecTool
     mock_config = MagicMock()
-    mock_config.tools.exec.enable = True
+    mock_config.exec.enable = True
     ctx = ToolContext(config=mock_config, workspace="/tmp")
     assert ExecTool.enabled(ctx) is True
-    mock_config.tools.exec.enable = False
+    mock_config.exec.enable = False
     assert ExecTool.enabled(ctx) is False
 
 
 def test_exec_tool_create():
     from nanobot.agent.tools.shell import ExecTool
     mock_config = MagicMock()
-    mock_config.tools.exec.enable = True
-    mock_config.tools.exec.timeout = 120
-    mock_config.tools.exec.sandbox = ""
-    mock_config.tools.exec.path_append = ""
-    mock_config.tools.exec.allowed_env_keys = []
-    mock_config.tools.exec.allow_patterns = []
-    mock_config.tools.exec.deny_patterns = []
-    mock_config.tools.restrict_to_workspace = False
+    mock_config.exec.enable = True
+    mock_config.exec.timeout = 120
+    mock_config.exec.sandbox = ""
+    mock_config.exec.path_append = ""
+    mock_config.exec.allowed_env_keys = []
+    mock_config.exec.allow_patterns = []
+    mock_config.exec.deny_patterns = []
+    mock_config.restrict_to_workspace = False
     ctx = ToolContext(config=mock_config, workspace="/tmp")
     tool = ExecTool.create(ctx)
     assert isinstance(tool, ExecTool)
@@ -242,20 +242,20 @@ def test_web_tools_config_cls():
 def test_web_tools_enabled():
     from nanobot.agent.tools.web import WebSearchTool
     mock_config = MagicMock()
-    mock_config.tools.web.enable = True
+    mock_config.web.enable = True
     ctx = ToolContext(config=mock_config, workspace="/tmp")
     assert WebSearchTool.enabled(ctx) is True
-    mock_config.tools.web.enable = False
+    mock_config.web.enable = False
     assert WebSearchTool.enabled(ctx) is False
 
 
 def test_web_search_tool_create():
     from nanobot.agent.tools.web import WebSearchTool
     mock_config = MagicMock()
-    mock_config.tools.web.enable = True
-    mock_config.tools.web.search = MagicMock()
-    mock_config.tools.web.proxy = None
-    mock_config.tools.web.user_agent = None
+    mock_config.web.enable = True
+    mock_config.web.search = MagicMock()
+    mock_config.web.proxy = None
+    mock_config.web.user_agent = None
     ctx = ToolContext(config=mock_config, workspace="/tmp")
     tool = WebSearchTool.create(ctx)
     assert isinstance(tool, WebSearchTool)
@@ -264,10 +264,10 @@ def test_web_search_tool_create():
 def test_web_fetch_tool_create():
     from nanobot.agent.tools.web import WebFetchTool
     mock_config = MagicMock()
-    mock_config.tools.web.enable = True
-    mock_config.tools.web.fetch = MagicMock()
-    mock_config.tools.web.proxy = None
-    mock_config.tools.web.user_agent = None
+    mock_config.web.enable = True
+    mock_config.web.fetch = MagicMock()
+    mock_config.web.proxy = None
+    mock_config.web.user_agent = None
     ctx = ToolContext(config=mock_config, workspace="/tmp")
     tool = WebFetchTool.create(ctx)
     assert isinstance(tool, WebFetchTool)
@@ -282,17 +282,17 @@ def test_image_gen_tool_config_cls():
 def test_image_gen_tool_enabled():
     from nanobot.agent.tools.image_generation import ImageGenerationTool
     mock_config = MagicMock()
-    mock_config.tools.image_generation.enabled = True
+    mock_config.image_generation.enabled = True
     ctx = ToolContext(config=mock_config, workspace="/tmp")
     assert ImageGenerationTool.enabled(ctx) is True
-    mock_config.tools.image_generation.enabled = False
+    mock_config.image_generation.enabled = False
     assert ImageGenerationTool.enabled(ctx) is False
 
 
 def test_image_gen_tool_create():
     from nanobot.agent.tools.image_generation import ImageGenerationTool
     mock_config = MagicMock()
-    mock_config.tools.image_generation = MagicMock()
+    mock_config.image_generation = MagicMock()
     ctx = ToolContext(
         config=mock_config, workspace="/tmp",
         image_generation_provider_configs={"openrouter": MagicMock()},
@@ -313,10 +313,10 @@ def test_my_tool_config_cls():
 def test_my_tool_enabled():
     from nanobot.agent.tools.self import MyTool
     mock_config = MagicMock()
-    mock_config.tools.my.enable = True
+    mock_config.my.enable = True
     ctx = ToolContext(config=mock_config, workspace="/tmp")
     assert MyTool.enabled(ctx) is True
-    mock_config.tools.my.enable = False
+    mock_config.my.enable = False
     assert MyTool.enabled(ctx) is False
 
 

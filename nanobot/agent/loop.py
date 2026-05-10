@@ -20,27 +20,17 @@ from nanobot.agent.context import ContextBuilder
 from nanobot.agent.hook import AgentHook, AgentHookContext, CompositeHook
 from nanobot.agent.memory import Consolidator, Dream
 from nanobot.agent.runner import _MAX_INJECTIONS_PER_TURN, AgentRunner, AgentRunSpec
-from nanobot.agent.skills import BUILTIN_SKILLS_DIR
 from nanobot.agent.subagent import SubagentManager
 from nanobot.agent.tools.ask import (
-    AskUserTool,
     ask_user_options_from_messages,
     ask_user_outbound,
     ask_user_tool_result_messages,
     pending_ask_user_id,
 )
-from nanobot.agent.tools.cron import CronTool
 from nanobot.agent.tools.file_state import FileStateStore, bind_file_states, reset_file_states
-from nanobot.agent.tools.filesystem import EditFileTool, ListDirTool, ReadFileTool, WriteFileTool
-from nanobot.agent.tools.image_generation import ImageGenerationTool
 from nanobot.agent.tools.message import MessageTool
-from nanobot.agent.tools.notebook import NotebookEditTool
 from nanobot.agent.tools.registry import ToolRegistry
-from nanobot.agent.tools.search import GlobTool, GrepTool
 from nanobot.agent.tools.self import MyTool
-from nanobot.agent.tools.shell import ExecTool
-from nanobot.agent.tools.spawn import SpawnTool
-from nanobot.agent.tools.web import WebFetchTool, WebSearchTool
 from nanobot.bus.events import InboundMessage, OutboundMessage
 from nanobot.bus.queue import MessageBus
 from nanobot.command import CommandContext, CommandRouter, register_builtin_commands
@@ -303,6 +293,13 @@ class AgentLoop:
         from nanobot.config.schema import ToolsConfig
 
         _tc = tools_config or ToolsConfig()
+        # Merge per-tool overrides into the ToolsConfig so the plugin loader
+        # sees a unified config (legacy callers pass exec_config / web_config
+        # as separate parameters).
+        if exec_config is not None:
+            _tc.exec = exec_config
+        if web_config is not None:
+            _tc.web = web_config
         defaults = AgentDefaults()
         self.bus = bus
         self.channels_config = channels_config
@@ -405,8 +402,6 @@ class AgentLoop:
             model=self.model,
         )
         self._register_default_tools()
-        if _tc.my.enable:
-            self.tools.register(MyTool(loop=self, modify_allowed=_tc.my.allow_set))
         self._runtime_vars: dict[str, Any] = {}
         self._current_iteration: int = 0
         self.commands = CommandRouter()
@@ -494,74 +489,32 @@ class AgentLoop:
         self._apply_provider_snapshot(snapshot)
 
     def _register_default_tools(self) -> None:
-        """Register the default set of tools."""
-        allowed_dir = (
-            self.workspace if (self.restrict_to_workspace or self.exec_config.sandbox) else None
-        )
-        extra_read = [BUILTIN_SKILLS_DIR] if allowed_dir else None
-        self.tools.register(AskUserTool())
-        self.tools.register(
-            ReadFileTool(
-                workspace=self.workspace,
-                allowed_dir=allowed_dir,
-                extra_allowed_dirs=extra_read,
-            )
-        )
-        for cls in (WriteFileTool, EditFileTool, ListDirTool):
-            self.tools.register(cls(workspace=self.workspace, allowed_dir=allowed_dir))
-        for cls in (GlobTool, GrepTool):
-            self.tools.register(cls(workspace=self.workspace, allowed_dir=allowed_dir))
-        self.tools.register(NotebookEditTool(workspace=self.workspace, allowed_dir=allowed_dir))
-        if self.exec_config.enable:
-            self.tools.register(
-                ExecTool(
-                    working_dir=str(self.workspace),
-                    timeout=self.exec_config.timeout,
-                    restrict_to_workspace=self.restrict_to_workspace,
-                    sandbox=self.exec_config.sandbox,
-                    path_append=self.exec_config.path_append,
-                    allowed_env_keys=self.exec_config.allowed_env_keys,
-                    allow_patterns=self.exec_config.allow_patterns,
-                    deny_patterns=self.exec_config.deny_patterns,
-                )
-            )
-        if self.web_config.enable:
-            web_search_config_loader = None
-            if self._provider_snapshot_loader is not None:
-                def web_search_config_loader():
-                    from nanobot.config.loader import load_config, resolve_config_env_vars
+        """Register the default set of tools via plugin loader."""
+        from nanobot.agent.tools.context import ToolContext
+        from nanobot.agent.tools.loader import ToolLoader
 
-                    return resolve_config_env_vars(load_config()).tools.web.search
+        ctx = ToolContext(
+            config=self.tools_config,
+            workspace=str(self.workspace),
+            bus=self.bus,
+            subagent_manager=self.subagents,
+            cron_service=self.cron_service,
+            file_state_store=self._file_state_store,
+            provider_snapshot_loader=self._provider_snapshot_loader,
+            image_generation_provider_configs=self._image_generation_provider_configs,
+            timezone=self.context.timezone or "UTC",
+        )
+        loader = ToolLoader()
+        registered = loader.load(ctx, self.tools)
 
+        # MyTool needs AgentLoop reference — manual registration
+        if self.tools_config.my.enable:
             self.tools.register(
-                WebSearchTool(
-                    config=self.web_config.search,
-                    proxy=self.web_config.proxy,
-                    user_agent=self.web_config.user_agent,
-                    config_loader=web_search_config_loader,
-                )
+                MyTool(loop=self, modify_allowed=self.tools_config.my.allow_set)
             )
-            self.tools.register(
-                WebFetchTool(
-                    config=self.web_config.fetch,
-                    proxy=self.web_config.proxy,
-                    user_agent=self.web_config.user_agent,
-                )
-            )
-        if self.tools_config.image_generation.enabled:
-            self.tools.register(
-                ImageGenerationTool(
-                    workspace=self.workspace,
-                    config=self.tools_config.image_generation,
-                    provider_configs=self._image_generation_provider_configs,
-                )
-            )
-        self.tools.register(MessageTool(send_callback=self.bus.publish_outbound, workspace=self.workspace))
-        self.tools.register(SpawnTool(manager=self.subagents))
-        if self.cron_service:
-            self.tools.register(
-                CronTool(self.cron_service, default_timezone=self.context.timezone or "UTC")
-            )
+            registered.append("my")
+
+        logger.info("Registered {} tools: {}", len(registered), registered)
 
     async def _connect_mcp(self) -> None:
         """Connect to configured MCP servers (one-time, lazy)."""
