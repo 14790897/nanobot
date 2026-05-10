@@ -70,6 +70,22 @@ class _FsTool(Tool):
         self._explicit_file_states = file_states
         self._fallback_file_states = FileStates()
 
+    @classmethod
+    def create(cls, ctx: Any) -> Tool:
+        from nanobot.agent.skills import BUILTIN_SKILLS_DIR
+
+        restrict = (
+            ctx.config.tools.restrict_to_workspace
+            or ctx.config.tools.exec.sandbox
+        )
+        allowed_dir = Path(ctx.workspace) if restrict else None
+        extra_read = [BUILTIN_SKILLS_DIR] if allowed_dir else None
+        return cls(
+            workspace=Path(ctx.workspace),
+            allowed_dir=allowed_dir,
+            extra_allowed_dirs=extra_read,
+        )
+
     @property
     def _file_states(self) -> FileStates:
         if self._explicit_file_states is not None:

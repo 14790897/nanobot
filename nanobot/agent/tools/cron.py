@@ -1,5 +1,7 @@
 """Cron tool for scheduling reminders and tasks."""
 
+from __future__ import annotations
+
 from contextvars import ContextVar
 from datetime import datetime
 from typing import Any
@@ -63,6 +65,14 @@ class CronTool(Tool):
         self._metadata: ContextVar[dict] = ContextVar("cron_metadata", default={})
         self._session_key: ContextVar[str] = ContextVar("cron_session_key", default="")
         self._in_cron_context: ContextVar[bool] = ContextVar("cron_in_context", default=False)
+
+    @classmethod
+    def enabled(cls, ctx: Any) -> bool:
+        return ctx.cron_service is not None
+
+    @classmethod
+    def create(cls, ctx: Any) -> Tool:
+        return cls(cron_service=ctx.cron_service, default_timezone=ctx.timezone)
 
     def set_context(
         self, channel: str, chat_id: str,

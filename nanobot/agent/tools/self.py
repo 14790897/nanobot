@@ -10,8 +10,17 @@ from loguru import logger
 from nanobot.agent.subagent import SubagentStatus
 from nanobot.agent.tools.base import Tool
 
+from pydantic import Field
+from nanobot.config.schema import Base
+
 if TYPE_CHECKING:
     from nanobot.agent.loop import AgentLoop
+
+
+class MyToolConfig(Base):
+    """Self-inspection tool configuration."""
+    enable: bool = True
+    allow_set: bool = False
 
 
 def _has_real_attr(obj: Any, key: str) -> bool:
@@ -29,6 +38,16 @@ def _has_real_attr(obj: Any, key: str) -> bool:
 
 class MyTool(Tool):
     """Check and set the agent loop's runtime configuration."""
+
+    config_key = "my"
+
+    @classmethod
+    def config_cls(cls):
+        return MyToolConfig
+
+    @classmethod
+    def enabled(cls, ctx: Any) -> bool:
+        return ctx.config.tools.my.enable
 
     BLOCKED = frozenset({
         # Core infrastructure

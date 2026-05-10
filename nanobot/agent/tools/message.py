@@ -68,6 +68,11 @@ class MessageTool(Tool):
             default=False,
         )
 
+    @classmethod
+    def create(cls, ctx: Any) -> Tool:
+        send_callback = ctx.bus.publish_outbound if ctx.bus else None
+        return cls(send_callback=send_callback, workspace=ctx.workspace)
+
     def set_context(
         self,
         channel: str,

@@ -1,5 +1,7 @@
 """Spawn tool for creating background subagents."""
 
+from __future__ import annotations
+
 from contextvars import ContextVar
 from typing import TYPE_CHECKING, Any
 
@@ -29,6 +31,10 @@ class SpawnTool(Tool):
             "spawn_origin_message_id",
             default=None,
         )
+
+    @classmethod
+    def create(cls, ctx: Any) -> Tool:
+        return cls(manager=ctx.subagent_manager)
 
     def set_context(self, channel: str, chat_id: str, effective_key: str | None = None) -> None:
         """Set the origin context for subagent announcements."""
