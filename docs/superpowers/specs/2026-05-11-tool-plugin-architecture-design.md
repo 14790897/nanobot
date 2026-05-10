@@ -360,9 +360,11 @@ The `create()` override does NOT pass `file_states`:
 class ReadFileTool(_FsTool):
     @classmethod
     def create(cls, ctx):
-        allowed_dir = (
-            Path(ctx.workspace) if ctx.config.tools.restrict_to_workspace else None
+        restrict = (
+            ctx.config.tools.restrict_to_workspace
+            or ctx.config.tools.exec.sandbox
         )
+        allowed_dir = Path(ctx.workspace) if restrict else None
         extra_read = [BUILTIN_SKILLS_DIR] if allowed_dir else None
         return cls(
             workspace=Path(ctx.workspace),
