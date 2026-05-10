@@ -1,9 +1,15 @@
 """Base class for agent tools."""
+from __future__ import annotations
 
+import typing
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from copy import deepcopy
 from typing import Any, TypeVar
+
+if typing.TYPE_CHECKING:
+    from pydantic import BaseModel
+    from nanobot.agent.tools.context import ToolContext
 
 _ToolT = TypeVar("_ToolT", bound="Tool")
 
@@ -165,6 +171,23 @@ class Tool(ABC):
     def exclusive(self) -> bool:
         """Whether this tool should run alone even if concurrency is enabled."""
         return False
+
+    # --- Plugin metadata ---
+
+    config_key: str = ""
+    _plugin_discoverable: bool = True
+
+    @classmethod
+    def config_cls(cls) -> type[BaseModel] | None:
+        return None
+
+    @classmethod
+    def enabled(cls, ctx: ToolContext) -> bool:
+        return True
+
+    @classmethod
+    def create(cls, ctx: ToolContext) -> Tool:
+        return cls()
 
     @abstractmethod
     async def execute(self, **kwargs: Any) -> Any:
