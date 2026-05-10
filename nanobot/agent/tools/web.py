@@ -20,9 +20,6 @@ from nanobot.utils.helpers import build_image_content_blocks
 from pydantic import Field
 from nanobot.config.schema import Base
 
-if TYPE_CHECKING:
-    from nanobot.config.schema import WebFetchConfig, WebSearchConfig
-
 # Shared constants
 _DEFAULT_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7_2) AppleWebKit/537.36"
 MAX_REDIRECTS = 5  # Limit redirects to prevent DoS attacks

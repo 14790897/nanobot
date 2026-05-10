@@ -63,12 +63,12 @@ from nanobot.utils.runtime import EMPTY_FINAL_RESPONSE_MESSAGE
 from nanobot.utils.webui_titles import mark_webui_session, maybe_generate_webui_title_after_turn
 
 if TYPE_CHECKING:
+    from nanobot.agent.tools.shell import ExecToolConfig
+    from nanobot.agent.tools.web import WebToolsConfig
     from nanobot.config.schema import (
         ChannelsConfig,
-        ExecToolConfig,
         ProviderConfig,
         ToolsConfig,
-        WebToolsConfig,
     )
     from nanobot.cron.service import CronService
 
@@ -298,7 +298,9 @@ class AgentLoop:
         provider_snapshot_loader: Callable[[], ProviderSnapshot] | None = None,
         provider_signature: tuple[object, ...] | None = None,
     ):
-        from nanobot.config.schema import ExecToolConfig, ToolsConfig, WebToolsConfig
+        from nanobot.agent.tools.shell import ExecToolConfig
+        from nanobot.agent.tools.web import WebToolsConfig
+        from nanobot.config.schema import ToolsConfig
 
         _tc = tools_config or ToolsConfig()
         defaults = AgentDefaults()

@@ -20,7 +20,9 @@ from nanobot.agent.tools.shell import ExecTool
 from nanobot.agent.tools.web import WebFetchTool, WebSearchTool
 from nanobot.bus.events import InboundMessage
 from nanobot.bus.queue import MessageBus
-from nanobot.config.schema import AgentDefaults, ExecToolConfig, WebToolsConfig
+from nanobot.agent.tools.shell import ExecToolConfig
+from nanobot.agent.tools.web import WebToolsConfig
+from nanobot.config.schema import AgentDefaults
 from nanobot.providers.base import LLMProvider
 from nanobot.utils.prompt_templates import render_template
 
