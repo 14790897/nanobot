@@ -270,6 +270,7 @@ function Shell({ onModelNameChange, onLogout }: { onModelNameChange: (modelName:
     label: string;
   } | null>(null);
   const restartSawDisconnectRef = useRef(false);
+  const lastSessionsLen = useRef(0);
   const [restartToast, setRestartToast] = useState<string | null>(null);
   const [isRestarting, setIsRestarting] = useState(false);
 
