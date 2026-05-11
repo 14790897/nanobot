@@ -40,6 +40,7 @@
     "recent": "最近对话",
     "refreshSessions": "刷新会话",
     "settings": "设置",
+    "artifacts": "产物",
     "language": {
       "label": "语言",
       "ariaLabel": "切换语言"
@@ -345,5 +346,10 @@
       "title": "消息过大",
       "body": "服务端因超过大小限制拒收了上一条消息。可移除部分图片或使用更小的图片后重试。"
     }
+  },
+  "artifacts": {
+    "title": "产物",
+    "back": "返回对话",
+    "empty": "暂无产物。在与 AI 对话中，生成的代码块和媒体文件将在此处展示。"
   }
 }

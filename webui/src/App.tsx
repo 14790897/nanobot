@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { DeleteConfirm } from "@/components/DeleteConfirm";
 import { Sidebar } from "@/components/Sidebar";
 import { SettingsView } from "@/components/settings/SettingsView";
+import { ArtifactsView } from "@/components/artifacts/ArtifactsView";
 import { ThreadShell } from "@/components/thread/ThreadShell";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { preloadMarkdownText } from "@/components/MarkdownText";
@@ -36,7 +37,7 @@ type BootState =
 const SIDEBAR_STORAGE_KEY = "nanobot-webui.sidebar";
 const RESTART_STARTED_KEY = "nanobot-webui.restartStartedAt";
 const SIDEBAR_WIDTH = 272;
-type ShellView = "chat" | "settings";
+type ShellView = "chat" | "settings" | "artifacts";
 
 function AuthForm({
   failed,
@@ -116,12 +117,15 @@ export default function App() {
           const boot = await fetchBootstrap("", secret);
           if (cancelled) return;
           if (secret) saveSecret(secret);
+          // 保存 API token 到 localStorage，供 artifacts 等组件使用
+          try { window.localStorage.setItem("nb_api_token", boot.token); } catch {}
           const url = deriveWsUrl(boot.ws_path, boot.token);
           const client = new NanobotClient({
             url,
             onReauth: async () => {
               try {
                 const refreshed = await fetchBootstrap("", secret);
+                try { window.localStorage.setItem("nb_api_token", refreshed.token); } catch {}
                 return deriveWsUrl(refreshed.ws_path, refreshed.token);
               } catch {
                 return null;
@@ -221,6 +225,7 @@ export default function App() {
     if (state.status === "ready") {
       state.client.close();
     }
+    try { window.localStorage.removeItem("nb_api_token"); } catch {}
     clearSavedSecret();
     setState({ status: "auth" });
   };
@@ -331,6 +336,11 @@ function Shell({ onModelNameChange, onLogout }: { onModelNameChange: (modelName:
     setMobileSidebarOpen(false);
   }, []);
 
+  const onOpenArtifacts = useCallback(() => {
+    setView("artifacts");
+    setMobileSidebarOpen(false);
+  }, []);
+
   const onBackToChat = useCallback(() => {
     setView("chat");
     setMobileSidebarOpen(false);
@@ -416,6 +426,12 @@ function Shell({ onModelNameChange, onLogout }: { onModelNameChange: (modelName:
       });
       return;
     }
+    if (view === "artifacts") {
+      document.title = t("app.documentTitle.chat", {
+        title: t("artifacts.title"),
+      });
+      return;
+    }
     document.title = activeSession
       ? t("app.documentTitle.chat", { title: headerTitle })
       : t("app.documentTitle.base");
@@ -430,8 +446,9 @@ function Shell({ onModelNameChange, onLogout }: { onModelNameChange: (modelName:
     onRequestDelete: (key: string, label: string) =>
       setPendingDelete({ key, label }),
     onOpenSettings,
+    onOpenArtifacts,
   };
-  const showMainSidebar = view !== "settings";
+  const showMainSidebar = view === "chat";
 
   return (
     <div className="relative flex h-full w-full overflow-hidden">
@@ -483,6 +500,11 @@ function Shell({ onModelNameChange, onLogout }: { onModelNameChange: (modelName:
             onLogout={onLogout}
             onRestart={onRestart}
             isRestarting={isRestarting}
+          />
+        ) : view === "artifacts" ? (
+          <ArtifactsView
+            activeKey={activeKey}
+            onBackToChat={onBackToChat}
           />
         ) : (
           <ThreadShell

@@ -33,7 +33,7 @@ from nanobot.bus.events import OutboundMessage
 from nanobot.bus.queue import MessageBus
 from nanobot.channels.base import BaseChannel
 from nanobot.command.builtin import builtin_command_palette
-from nanobot.config.paths import get_media_dir
+from nanobot.config.paths import get_media_dir, get_workspace_path
 from nanobot.config.schema import Base
 from nanobot.utils.helpers import safe_filename
 from nanobot.utils.media_decode import (
@@ -606,6 +606,14 @@ class WebSocketChannel(BaseChannel):
         if m:
             return self._handle_media_fetch(m.group(1), m.group(2))
 
+        # Workspace file serving (artifacts feature).
+        # Accepts a relative path inside the workspace root, e.g.
+        # ``/api/workspace/output.png`` or ``/api/workspace/subdir/report.pdf``.
+        m = re.match(r"^/api/workspace/(.+)$", got)
+        if m:
+            logger.debug(f"[workspace] route matched, rel_path={m.group(1)}")
+            return self._handle_workspace_file(m.group(1), request)
+
         # 4. WebSocket upgrade (the channel's primary purpose). Only run the
         # handshake gate on requests that actually ask to upgrade; otherwise
         # a bare ``GET /`` from the browser would be rejected as an
@@ -1057,6 +1065,57 @@ class WebSocketChannel(BaseChannel):
                 ("Cache-Control", "private, max-age=31536000, immutable"),
                 # Paired with the MIME whitelist above: prevents browsers from
                 # MIME-sniffing an octet-stream fallback into executable HTML.
+                ("X-Content-Type-Options", "nosniff"),
+            ],
+        )
+
+    def _handle_workspace_file(self, rel_path: str, request: WsRequest) -> Response:
+        """Serve a file from the workspace directory.
+
+        *rel_path* is a URL-encoded relative path (using ``/`` or ``\\`` as
+        separator).  The resolved path is required to live inside
+        :func:`get_workspace_path`; any traversal attempt is rejected with
+        403.  The caller must present a valid API token.
+        """
+        if not self._check_api_token(request):
+            return _http_error(401, "Unauthorized")
+
+        # Decode percent-encoding and normalize separators so that both
+        # POSIX-style and Windows-style segments work in the URL.
+        decoded = unquote(rel_path).replace("\\", "/")
+        try:
+            workspace_root = get_workspace_path().resolve()
+            # ``PurePosixPath`` keeps forward-slashes intact on Windows.
+            rel = Path(decoded.lstrip("/"))
+            candidate = (workspace_root / rel).resolve()
+            # Raise ``ValueError`` if *candidate* escapes the root.
+            candidate.relative_to(workspace_root)
+        except (OSError, ValueError):
+            return _http_error(403, "Forbidden")
+
+        if not candidate.is_file():
+            return _http_error(404, "Not Found")
+
+        try:
+            body = candidate.read_bytes()
+        except OSError:
+            return _http_error(500, "Read Error")
+
+        mime, _ = mimetypes.guess_type(candidate.name)
+        if mime is None:
+            mime = "application/octet-stream"
+
+        # For workspace files we allow a broader set of MIME types than the
+        # media endpoint, but still block HTML to prevent XSS via uploaded
+        # artifacts.  The ``nosniff`` header reinforces this on modern browsers.
+        if mime == "text/html":
+            mime = "application/octet-stream"
+
+        return _http_response(
+            body,
+            content_type=mime,
+            extra_headers=[
+                ("Cache-Control", "private, max-age=0, no-cache"),
                 ("X-Content-Type-Options", "nosniff"),
             ],
         )

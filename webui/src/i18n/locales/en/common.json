@@ -52,6 +52,7 @@
     "recent": "Recent",
     "refreshSessions": "Refresh sessions",
     "settings": "Settings",
+    "artifacts": "Artifacts",
     "language": {
       "label": "Language",
       "ariaLabel": "Change language"
@@ -357,5 +358,10 @@
       "title": "Message too large",
       "body": "The server rejected your last message because it exceeded the size limit. Remove some images or try smaller files, then send again."
     }
+  },
+  "artifacts": {
+    "title": "Artifacts",
+    "back": "Back to chat",
+    "empty": "No artifacts yet. Code blocks and media files generated in conversations will appear here."
   }
 }
