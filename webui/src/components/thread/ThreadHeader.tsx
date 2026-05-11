@@ -1,4 +1,4 @@
-import { Menu, Moon, Sun } from "lucide-react";
+import { Menu, Moon, PanelRightClose, PanelRightOpen, Sun } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 interface ThreadHeaderProps {
   title: string;
   onToggleSidebar: () => void;
+  onToggleRightPanel?: () => void;
+  isRightPanelOpen?: boolean;
   theme: "light" | "dark";
   onToggleTheme: () => void;
   hideSidebarToggleOnDesktop?: boolean;
@@ -16,6 +18,8 @@ interface ThreadHeaderProps {
 export function ThreadHeader({
   title,
   onToggleSidebar,
+  onToggleRightPanel,
+  isRightPanelOpen = false,
   theme,
   onToggleTheme,
   hideSidebarToggleOnDesktop = false,
@@ -37,7 +41,24 @@ export function ThreadHeader({
         >
           <Menu className="h-3.5 w-3.5" />
         </Button>
-        <ThemeButton theme={theme} onToggleTheme={onToggleTheme} label={t("thread.header.toggleTheme")} />
+        <div className="flex items-center gap-1">
+          {onToggleRightPanel && (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t("thread.header.toggleRightPanel")}
+              onClick={onToggleRightPanel}
+              className="h-7 w-7 rounded-md text-muted-foreground hover:bg-accent/35 hover:text-foreground"
+            >
+              {isRightPanelOpen ? (
+                <PanelRightClose className="h-3.5 w-3.5" />
+              ) : (
+                <PanelRightOpen className="h-3.5 w-3.5" />
+              )}
+            </Button>
+          )}
+          <ThemeButton theme={theme} onToggleTheme={onToggleTheme} label={t("thread.header.toggleTheme")} />
+        </div>
       </div>
     );
   }
@@ -62,7 +83,24 @@ export function ThreadHeader({
         </div>
       </div>
 
-      <ThemeButton theme={theme} onToggleTheme={onToggleTheme} label={t("thread.header.toggleTheme")} />
+      <div className="flex items-center gap-1">
+        {onToggleRightPanel && (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t("thread.header.toggleRightPanel")}
+            onClick={onToggleRightPanel}
+            className="h-7 w-7 rounded-md text-muted-foreground hover:bg-accent/35 hover:text-foreground"
+          >
+            {isRightPanelOpen ? (
+              <PanelRightClose className="h-3.5 w-3.5" />
+            ) : (
+              <PanelRightOpen className="h-3.5 w-3.5" />
+            )}
+          </Button>
+        )}
+        <ThemeButton theme={theme} onToggleTheme={onToggleTheme} label={t("thread.header.toggleTheme")} />
+      </div>
 
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-full h-4" />
     </div>

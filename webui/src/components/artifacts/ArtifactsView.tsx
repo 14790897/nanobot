@@ -174,7 +174,7 @@ function TextPreviewModal({
       .then(async (res) => {
         if (!res.ok) {
           const text = await res.text().catch(() => "");
-          throw new Error(`HTTP ${res.status} ${res.statusText}`);
+          throw new Error(`HTTP ${res.status} ${res.statusText}: ${text}`);
         }
         return res.text();
       })

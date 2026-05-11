@@ -35,8 +35,10 @@ type BootState =
     };
 
 const SIDEBAR_STORAGE_KEY = "nanobot-webui.sidebar";
+const RIGHT_PANEL_STORAGE_KEY = "nanobot-webui.rightPanel";
 const RESTART_STARTED_KEY = "nanobot-webui.restartStartedAt";
 const SIDEBAR_WIDTH = 272;
+const RIGHT_PANEL_WIDTH = 400;
 type ShellView = "chat" | "settings" | "artifacts";
 
 function AuthForm({
@@ -101,6 +103,16 @@ function readSidebarOpen(): boolean {
     return raw === "1";
   } catch {
     return true;
+  }
+}
+
+function readRightPanelOpen(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const raw = window.localStorage.getItem(RIGHT_PANEL_STORAGE_KEY);
+    return raw === "1";
+  } catch {
+    return false;
   }
 }
 
@@ -251,6 +263,8 @@ function Shell({ onModelNameChange, onLogout }: { onModelNameChange: (modelName:
   const [desktopSidebarOpen, setDesktopSidebarOpen] =
     useState<boolean>(readSidebarOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [rightPanelOpen, setRightPanelOpen] =
+    useState<boolean>(readRightPanelOpen);
   const [pendingDelete, setPendingDelete] = useState<{
     key: string;
     label: string;
@@ -270,6 +284,17 @@ function Shell({ onModelNameChange, onLogout }: { onModelNameChange: (modelName:
       // ignore storage errors (private mode, etc.)
     }
   }, [desktopSidebarOpen]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        RIGHT_PANEL_STORAGE_KEY,
+        rightPanelOpen ? "1" : "0",
+      );
+    } catch {
+      // ignore storage errors
+    }
+  }, [rightPanelOpen]);
 
   useEffect(() => {
     if (activeKey) return;
@@ -303,7 +328,11 @@ function Shell({ onModelNameChange, onLogout }: { onModelNameChange: (modelName:
     }
   }, []);
 
-  const onCreateChat = useCallback(async () => {
+  const toggleRightPanel = useCallback(() => {
+    setRightPanelOpen((v) => !v);
+  }, []);
+
+const onCreateChat = useCallback(async () => {
     try {
       const chatId = await createChat();
       setActiveKey(`websocket:${chatId}`);
@@ -393,6 +422,10 @@ function Shell({ onModelNameChange, onLogout }: { onModelNameChange: (modelName:
 
   const onTurnEnd = useCallback(() => {
     void refresh();
+    // 通知所有 useSessionHistory 实例刷新消息
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('session-history-refetch'));
+    }
   }, [refresh]);
 
   const onConfirmDelete = useCallback(async () => {
@@ -449,6 +482,13 @@ function Shell({ onModelNameChange, onLogout }: { onModelNameChange: (modelName:
     onOpenArtifacts,
   };
   const showMainSidebar = view === "chat";
+
+  // 当右侧面板打开时，刷新产物列表
+  useEffect(() => {
+    if (rightPanelOpen && activeKey) {
+      window.dispatchEvent(new Event('session-history-refetch'));
+    }
+  }, [rightPanelOpen, activeKey]);
 
   return (
     <div className="relative flex h-full w-full overflow-hidden">
@@ -511,6 +551,8 @@ function Shell({ onModelNameChange, onLogout }: { onModelNameChange: (modelName:
             session={activeSession}
             title={headerTitle}
             onToggleSidebar={toggleSidebar}
+            onToggleRightPanel={toggleRightPanel}
+            isRightPanelOpen={rightPanelOpen}
             onNewChat={onNewChat}
             onCreateChat={onCreateChat}
             onTurnEnd={onTurnEnd}
@@ -520,6 +562,29 @@ function Shell({ onModelNameChange, onLogout }: { onModelNameChange: (modelName:
           />
         )}
       </main>
+
+      {/* Right Panel - File Viewer */}
+      <aside
+        className={cn(
+          "relative z-20 hidden shrink-0 overflow-hidden border-l border-border/60 bg-background lg:block",
+          "transition-[width] duration-300 ease-out",
+        )}
+        style={{ width: rightPanelOpen ? RIGHT_PANEL_WIDTH : 0 }}
+      >
+        <div
+          className={cn(
+            "absolute inset-y-0 right-0 h-full overflow-hidden",
+            "transition-transform duration-300 ease-out",
+            rightPanelOpen ? "translate-x-0" : "translate-x-full",
+          )}
+          style={{ width: RIGHT_PANEL_WIDTH }}
+        >
+          <ArtifactsView
+            activeKey={activeKey}
+            onBackToChat={() => setRightPanelOpen(false)}
+          />
+        </div>
+      </aside>
 
       <DeleteConfirm
         open={!!pendingDelete}

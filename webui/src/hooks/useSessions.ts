@@ -104,6 +104,20 @@ export function useSessionHistory(key: string | null): {
     hasPendingToolCalls: false,
   });
 
+  // 添加 refreshTrigger 用于手动触发刷新
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // 监听会话历史刷新事件
+  useEffect(() => {
+    const handleRefetch = () => {
+      if (!key) return;
+      setRefreshTrigger(prev => prev + 1);
+    };
+
+    window.addEventListener('session-history-refetch', handleRefetch);
+    return () => window.removeEventListener('session-history-refetch', handleRefetch);
+  }, [key]);
+
   useEffect(() => {
     if (!key) {
       setState({
@@ -196,7 +210,7 @@ export function useSessionHistory(key: string | null): {
     return () => {
       cancelled = true;
     };
-  }, [key, token]);
+  }, [key, token, refreshTrigger]);
 
   if (!key) {
     return { messages: EMPTY_MESSAGES, loading: false, error: null, hasPendingToolCalls: false };

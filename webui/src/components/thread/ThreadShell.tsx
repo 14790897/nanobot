@@ -28,6 +28,8 @@ interface ThreadShellProps {
   session: ChatSummary | null;
   title: string;
   onToggleSidebar: () => void;
+  onToggleRightPanel?: () => void;
+  isRightPanelOpen?: boolean;
   onGoHome?: () => void;
   onNewChat?: () => void;
   onCreateChat?: () => Promise<string | null>;
@@ -73,6 +75,8 @@ export function ThreadShell({
   session,
   title,
   onToggleSidebar,
+  onToggleRightPanel,
+  isRightPanelOpen = false,
   onCreateChat,
   onTurnEnd,
   theme = "light",
@@ -308,6 +312,8 @@ export function ThreadShell({
       <ThreadHeader
         title={title}
         onToggleSidebar={onToggleSidebar}
+        onToggleRightPanel={onToggleRightPanel}
+        isRightPanelOpen={isRightPanelOpen}
         theme={theme}
         onToggleTheme={onToggleTheme}
         hideSidebarToggleOnDesktop={hideSidebarToggleOnDesktop}
