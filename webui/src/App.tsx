@@ -269,7 +269,6 @@ function Shell({ onModelNameChange, onLogout }: { onModelNameChange: (modelName:
     key: string;
     label: string;
   } | null>(null);
-  const lastSessionsLen = useRef(0);
   const restartSawDisconnectRef = useRef(false);
   const [restartToast, setRestartToast] = useState<string | null>(null);
   const [isRestarting, setIsRestarting] = useState(false);
@@ -374,9 +373,8 @@ const onCreateChat = useCallback(async () => {
     setView("chat");
     setMobileSidebarOpen(false);
     setActiveKey((current) => {
-      if (current && sessions.some((session) => session.key === current)) {
-        return current;
-      }
+      if (!current) return null;
+      if (sessions.some((session) => session.key === current)) return current;
       return sessions[0]?.key ?? null;
     });
   }, [sessions]);
