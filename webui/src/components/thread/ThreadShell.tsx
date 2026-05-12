@@ -34,7 +34,6 @@ interface ThreadShellProps {
   onNewChat?: () => void;
   onCreateChat?: () => Promise<string | null>;
   onTurnEnd?: () => void;
-  onModelNameChange?: (modelName: string | null) => void;
   theme?: "light" | "dark";
   onToggleTheme?: () => void;
   hideSidebarToggleOnDesktop?: boolean;
@@ -80,7 +79,6 @@ export function ThreadShell({
   isRightPanelOpen = false,
   onCreateChat,
   onTurnEnd,
-  onModelNameChange,
   theme = "light",
   onToggleTheme = () => {},
   hideSidebarToggleOnDesktop = false,
@@ -109,7 +107,7 @@ export function ThreadShell({
     setMessages,
     streamError,
     dismissStreamError,
-  } = useNanobotStream(chatId, initial, hasPendingToolCalls, onTurnEnd, onModelNameChange);
+  } = useNanobotStream(chatId, initial, hasPendingToolCalls, onTurnEnd);
   const showHeroComposer = messages.length === 0 && !loading;
   const pendingAsk = useMemo(() => {
     for (let index = messages.length - 1; index >= 0; index -= 1) {

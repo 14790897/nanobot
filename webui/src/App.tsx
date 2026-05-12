@@ -395,6 +395,12 @@ const onCreateChat = useCallback(async () => {
   }, [activeSession?.chatId, client]);
 
   useEffect(() => {
+    return client.onRuntimeModelUpdate((modelName) => {
+      onModelNameChange(modelName);
+    });
+  }, [client, onModelNameChange]);
+
+  useEffect(() => {
     return client.onStatus((status) => {
       let startedAt = 0;
       try {
@@ -556,7 +562,6 @@ const onCreateChat = useCallback(async () => {
             onNewChat={onNewChat}
             onCreateChat={onCreateChat}
             onTurnEnd={onTurnEnd}
-            onModelNameChange={onModelNameChange}
             theme={theme}
             onToggleTheme={toggle}
             hideSidebarToggleOnDesktop={desktopSidebarOpen}
